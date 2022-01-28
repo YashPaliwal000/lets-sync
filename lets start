@@ -1,0 +1,35 @@
+Let it Sync! Using Monstache to sync MongoDb and Elasticsearch in real-time.
+
+Many of us might have heard about elasticsearch. It is an open-source NoSQL search engine that is commonly used to search and analyze data. With that being said, we know that elasticsearch is not recommended to be used as a primary database, hence we always need a database to be used with Elasticsearch and keep them synced!
+
+In order to sync elasticsearch with relational databases, there are tools like JDBC and logstash, and many tutorials and articles on how to integrate that but elasticsearch does not provide the required MongoDB JDBC support, which leaves us with very few tools which can be used to sync MongoDB and elasticsearch:
+
+Mongo Connector:
+According to its Github:
+“ mongo-connector creates a pipeline from a MongoDB cluster to one or more target systems, such as Solr, Elasticsearch, or another MongoDB cluster. “
+But the drawback of Mongo Connector is that it does not have very good support for Elasticsearch 6+. Not to forget that its repository has not been updated for more than a year.
+Trasporter:
+Transporter is a good tool to export data from MongoDB to elasticsearch, but it does not provide real-time syncing.
+Mongoosastic:
+According to its Github:
+“Mongoosastic is a mongoose plugin that can automatically index
+your models into elasticsearch.”
+But, it is only useful when changes in MongoDB are done through the server, any changes done directly to MongoDB will not reflect in Elasticsearch
+Sync in real-time with Monstache!
+Monstache is a sync daemon written in Go that syncs MongoDB collections into Elasticsearch in real-time. It is possible using monstache to index entire MongoDB collections into elasticsearch, and after indexing, monstache will also keep everything synced.
+
+How it syncs in real-time?
+Monstache reads oplogs of the MongoDB that is connected to it, to sync every operation that is performed on MongoDB. 
+
+You will need to ensure that MongoDB is configured to produce an oplog by deploying a replica set. If you haven’t already done so, follow the 5 step procedure to initiate and validate your replica set. For testing it locally, your replica set may contain a single member.
+
+Before we move forward, let me mention some features of monstache listed here:
+
+1.Supports up to and including the latest versions of Elasticsearch and MongoDB
+2.Single binary with a light footprint
+3.Support for MongoDB change streams and aggregation pipelines
+4.Pre built Docker containers
+5.Optionally filter the set of collections to sync
+6.Direct read mode to do a full sync of collections in addition to tailing the oplog
+7.Transform and filter documents before indexing using Golang plugins or JavaScript 
+
