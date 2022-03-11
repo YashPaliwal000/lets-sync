@@ -1,0 +1,128 @@
+#this compose file set up mongodb with replication and elasticsearch Instance at port 9200 with Kibana running at port 5601 and runs monstache deamon with provided config.
+version: "2.1"
+services:
+  mongodb1:
+        image: mongo:latest
+        restart: always
+        container_name: mongodb1
+        volumes:
+        - mongodata1:/data/db
+       
+        expose:
+        - "27017"
+        ports:
+        - 27011:27017
+        entrypoint: [ "/usr/bin/mongod", "--replSet", "rsmongo", "--bind_ip_all"]
+ 
+        networks:
+            mynetwork:
+              aliases:
+               - mongodb
+
+  mongodb2:
+        image: mongo:latest
+        restart: always
+        container_name: mongodb2
+        volumes:
+        - mongodata2:/data/db
+        expose:
+        - "27017"
+        ports:
+        - 27012:27017
+        entrypoint: [ "/usr/bin/mongod", "--replSet", "rsmongo", "--bind_ip_all"]
+
+        networks:
+            mynetwork:
+              aliases:
+               - mongodb
+
+  mongodb3:
+        image: mongo:latest
+        restart: always
+        container_name: mongodb3
+        volumes:
+        - mongodata3:/data/db
+        expose:
+        - "27017"
+        ports:
+        - 27013:27017
+        entrypoint: [ "/usr/bin/mongod", "--replSet", "rsmongo", "--bind_ip_all" ]  
+
+        networks:
+            mynetwork:
+              aliases:
+               - mongodb
+  elasticsearch:
+    restart: always
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.8.23
+    ports:
+      - 9200:9200
+      - 9300:9300
+    depends_on:
+      - mongodb
+    environment:
+      - ES_JAVA_OPTS=-Xms2048m -Xmx2048m
+      - discovery.type=single-node
+    healthcheck:
+      test: "wget -q -O - http://localhost:9200/_cat/health"
+      interval: 1s
+      timeout: 30s
+      retries: 300
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+
+    networks:
+          mynetwork:
+            aliases:
+              - elasticsearch
+  
+              
+  kibana:
+    restart: always
+    image: docker.elastic.co/kibana/kibana:6.8.23
+    expose:
+      - "5601"
+    ports:
+      - 5601:5601
+    depends_on:
+      - elasticsearch
+    environment:
+      - SERVER_PORT=5601
+      - SERVER_NAME=kibana.example.org
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+
+    networks:
+          mynetwork:
+            aliases:
+              - kibana
+  monstache:
+
+      image: rwynn/monstache:5.7.7      
+      container_name: monstache_container       
+      working_dir: /monstache        
+      command: -f ./config.toml        
+      volumes:          
+                - ./monstache:/monstache/        
+      ports:          
+                - "8080:8080"        
+      restart: always   
+      links:
+      - elasticsearch
+
+      networks:
+          mynetwork:
+            aliases:
+              - monstache
+
+
+
+networks:
+  mynetwork:
+
+
+volumes:
+    mongodata1:
+    mongodata2:
+    mongodata3: 
